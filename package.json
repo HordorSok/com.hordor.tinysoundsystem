@@ -1,0 +1,10 @@
+{
+  "name": "com.hordor.tinysoundsystem",
+  "displayName": "Tiny Sound System",
+  "version": "1.0.0",
+  "unity": "2022.3",
+  "description": "Reusable audio manager for Unity projects.",
+  "author": {
+    "name": "Your Name"
+  }
+}
