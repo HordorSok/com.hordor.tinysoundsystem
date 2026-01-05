@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4696639252300321694}
   - component: {fileID: 5094731650153610890}
   - component: {fileID: 8565332835919698227}
+  - component: {fileID: 1469903897780892379}
   m_Layer: 0
   m_Name: TinySoundSystem
   m_TagString: Untagged
@@ -53,6 +54,8 @@ MonoBehaviour:
   musicVolumeParam: MusicVol
   sfxVolumeParam: SfxVol
   musicPlayer: {fileID: 8565332835919698227}
+  fadeRunner: {fileID: 1469903897780892379}
+  muteFadeTime: 0.1
 --- !u!114 &8565332835919698227
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -66,3 +69,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TinySoundSystem.Runtime::MusicPlayer
   musicGroup: {fileID: -2725969617391338258, guid: 178b2241fe739b145a85b141f101550f, type: 2}
+--- !u!114 &1469903897780892379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2168745149946274487}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e86a7cb491ea13e4483e505d82c05a0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TinySoundSystem.Runtime::AudioFadeRunner

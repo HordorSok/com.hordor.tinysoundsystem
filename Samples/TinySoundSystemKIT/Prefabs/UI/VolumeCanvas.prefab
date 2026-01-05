@@ -1036,7 +1036,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 7532038393216664248}
+      - m_Target: {fileID: 5809821717967417312}
         m_TargetAssemblyTypeName: TinySoundSystem.SoundEmmiter, TinySoundSystem.Runtime
         m_MethodName: Play
         m_Mode: 1

@@ -20,6 +20,8 @@ public sealed class AudioManager : MonoBehaviour, IAudioService, IAudioMuteQuery
 
     [Header("Music")]
     [SerializeField] private MusicPlayer musicPlayer;
+    [SerializeField] private AudioFadeRunner fadeRunner;
+    [SerializeField] private float muteFadeTime = 0.03f;
 
     private readonly Queue<AudioSource> free = new();
     private readonly LinkedList<AudioSource> busyOrder = new();
@@ -39,6 +41,9 @@ public sealed class AudioManager : MonoBehaviour, IAudioService, IAudioMuteQuery
     private float musicVol01 = 1f;
     private float sfxVol01 = 1f;
 
+    private bool resumeMusicAfterAllUnmute;
+    private bool resumeMusicAfterMusicUnmute;
+
     private void Awake()
     {
         WarmPool(initialVoices);
@@ -50,7 +55,21 @@ public sealed class AudioManager : MonoBehaviour, IAudioService, IAudioMuteQuery
             musicPlayer = go.AddComponent<MusicPlayer>();
         }
 
+        if (fadeRunner == null)
+        {
+            var go = new GameObject("AudioFadeRunner");
+            go.transform.SetParent(transform);
+            fadeRunner = go.AddComponent<AudioFadeRunner>();
+        }
+
         musicPlayer.Bind(this);
+
+        if (mixer != null)
+        {
+            ApplyMixerVolume(masterVolumeParam, masterVol01);
+            ApplyMixerVolume(musicVolumeParam, musicVol01);
+            ApplyMixerVolume(sfxVolumeParam, sfxVol01);
+        }
     }
 
     public AudioHandle Play(SoundRef s) => PlayInternal(s, default);
@@ -67,31 +86,108 @@ public sealed class AudioManager : MonoBehaviour, IAudioService, IAudioMuteQuery
         switch (bus)
         {
             case AudioBus.All:
+                if (mutedAll == muted) return;
                 mutedAll = muted;
+
                 if (mutedAll)
                 {
-                    StopAllByBus(AudioBus.All);
-                    musicPlayer?.Pause();
+                    resumeMusicAfterAllUnmute = musicPlayer != null && musicPlayer.IsPlaying;
+
+                    if (fadeRunner != null && mixer != null)
+                    {
+                        fadeRunner.FadeMixer(mixer, "Master", masterVolumeParam, masterVol01, 0f, muteFadeTime, () =>
+                        {
+                            StopAllByBus(AudioBus.All);
+                            musicPlayer?.Pause();
+                        });
+                    }
+                    else
+                    {
+                        StopAllByBus(AudioBus.All);
+                        musicPlayer?.Pause();
+                        ApplyMixerVolume(masterVolumeParam, 0f);
+                    }
                 }
-                ApplyMixerVolume(masterVolumeParam, mutedAll ? 0f : masterVol01);
+                else
+                {
+                    if (resumeMusicAfterAllUnmute && musicPlayer != null && musicPlayer.Current != null)
+                        musicPlayer.Play(musicPlayer.Current, 1f, false);
+
+                    resumeMusicAfterAllUnmute = false;
+
+                    if (fadeRunner != null && mixer != null)
+                        fadeRunner.FadeMixer(mixer, "Master", masterVolumeParam, 0f, masterVol01, muteFadeTime);
+                    else
+                        ApplyMixerVolume(masterVolumeParam, masterVol01);
+                }
                 break;
 
             case AudioBus.Music:
+                if (mutedMusic == muted) return;
                 mutedMusic = muted;
-                if (mutedMusic) musicPlayer?.Pause();
-                ApplyMixerVolume(musicVolumeParam, mutedMusic ? 0f : musicVol01);
+
+                if (mutedMusic)
+                {
+                    resumeMusicAfterMusicUnmute = musicPlayer != null && musicPlayer.IsPlaying;
+
+                    if (fadeRunner != null && mixer != null)
+                    {
+                        fadeRunner.FadeMixer(mixer, "Music", musicVolumeParam, musicVol01, 0f, muteFadeTime, () =>
+                        {
+                            musicPlayer?.Pause();
+                        });
+                    }
+                    else
+                    {
+                        musicPlayer?.Pause();
+                        ApplyMixerVolume(musicVolumeParam, 0f);
+                    }
+                }
+                else
+                {
+                    if (resumeMusicAfterMusicUnmute && musicPlayer != null && musicPlayer.Current != null)
+                        musicPlayer.Play(musicPlayer.Current, 1f, false);
+
+                    resumeMusicAfterMusicUnmute = false;
+
+                    if (fadeRunner != null && mixer != null)
+                        fadeRunner.FadeMixer(mixer, "Music", musicVolumeParam, 0f, musicVol01, muteFadeTime);
+                    else
+                        ApplyMixerVolume(musicVolumeParam, musicVol01);
+                }
                 break;
 
             case AudioBus.Sound:
+                if (mutedSfx == muted) return;
                 mutedSfx = muted;
-                if (mutedSfx) StopAllByBus(AudioBus.Sound);
-                ApplyMixerVolume(sfxVolumeParam, mutedSfx ? 0f : sfxVol01);
+
+                if (mutedSfx)
+                {
+                    if (fadeRunner != null && mixer != null)
+                    {
+                        fadeRunner.FadeMixer(mixer, "SFX", sfxVolumeParam, sfxVol01, 0f, muteFadeTime, () =>
+                        {
+                            StopAllByBus(AudioBus.Sound);
+                        });
+                    }
+                    else
+                    {
+                        StopAllByBus(AudioBus.Sound);
+                        ApplyMixerVolume(sfxVolumeParam, 0f);
+                    }
+                }
+                else
+                {
+                    if (fadeRunner != null && mixer != null)
+                        fadeRunner.FadeMixer(mixer, "SFX", sfxVolumeParam, 0f, sfxVol01, muteFadeTime);
+                    else
+                        ApplyMixerVolume(sfxVolumeParam, sfxVol01);
+                }
                 break;
         }
     }
 
     public bool IsMuted(AudioBus bus) => IsMutedInternal(bus);
-
     bool IAudioMuteQuery.IsMuted(AudioBus bus) => IsMutedInternal(bus);
 
     public void SetVolume01(AudioBus bus, float v01)
@@ -183,8 +279,21 @@ public sealed class AudioManager : MonoBehaviour, IAudioService, IAudioMuteQuery
 #endif
 
         if (mutedAll) return default;
-        if (s.bus == AudioBus.Music && mutedMusic) return default;
-        if (s.bus == AudioBus.Sound && mutedSfx) return default;
+
+        if (s.bus == AudioBus.Music)
+        {
+            if (mutedMusic) return default;
+
+            float vol01 = 1f;
+            if (opt.VolumeMul.HasValue) vol01 *= opt.VolumeMul.Value;
+            if (opt.VolumeAdd.HasValue) vol01 += opt.VolumeAdd.Value;
+            vol01 = Mathf.Clamp01(vol01);
+
+            musicPlayer?.Play(s, vol01, false);
+            return default;
+        }
+
+        if (mutedSfx) return default;
 
         if (s.cooldown > 0f)
         {

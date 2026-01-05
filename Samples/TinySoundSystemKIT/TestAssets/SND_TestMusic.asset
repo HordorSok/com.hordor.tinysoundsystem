@@ -17,7 +17,7 @@ MonoBehaviour:
   bus: 1
   volume: 1
   pitch: 1
-  loop: 0
+  loop: 1
   randomPitch: 0
   pitchJitter: 0.05
   spatial: 0
