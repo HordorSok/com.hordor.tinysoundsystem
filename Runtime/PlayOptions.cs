@@ -2,14 +2,14 @@ using UnityEngine;
 
 public readonly struct PlayOptions
 {
-    public readonly float? VolumeMul; // multiplies SoundRef.volume
-    public readonly float? VolumeAdd; // adds after mul
-    public readonly float? PitchMul;  // multiplies final pitch
-    public readonly float? PitchAdd;  // adds after mul
+    public readonly float? VolumeMul;
+    public readonly float? VolumeAdd;
+    public readonly float? PitchMul;
+    public readonly float? PitchAdd;
 
-    public readonly Vector3? Position;   // play at world pos
-    public readonly Transform Follow;    // follow transform (2D/3D)
-    public readonly bool? SpatialOverride; // override SoundRef.spatial
+    public readonly Vector3? Position;
+    public readonly Transform Follow;
+    public readonly bool? SpatialOverride;
 
     public PlayOptions(
         float? volumeMul = null,
@@ -28,7 +28,4 @@ public readonly struct PlayOptions
         Follow = follow;
         SpatialOverride = spatialOverride;
     }
-
-    public static PlayOptions At(Vector3 pos) => new(position: pos);
-    public static PlayOptions FollowTarget(Transform t) => new(follow: t);
 }

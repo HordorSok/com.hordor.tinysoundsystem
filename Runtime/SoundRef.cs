@@ -9,6 +9,7 @@ public class SoundRef : ScriptableObject
 
     [Header("Routing")]
     public AudioMixerGroup mixerGroup;
+    public AudioBus bus = AudioBus.Sound;
 
     [Header("Defaults")]
     [Range(0f, 1f)] public float volume = 1f;
@@ -26,9 +27,6 @@ public class SoundRef : ScriptableObject
     public float maxDistance = 25f;
 
     [Header("Limits")]
-    [Tooltip("Max simultaneous instances of this sound (0 = unlimited).")]
     public int maxSimultaneous = 6;
-
-    [Tooltip("Min time (sec) between triggers of this sound (0 = no cooldown).")]
     public float cooldown = 0f;
 }
