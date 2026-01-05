@@ -12,7 +12,12 @@
       "displayName": "Tiny Sound System KIT",
       "description": "Demo scene and prefabs",
       "path": "Samples~/TinySoundSystemKIT"
+    },
+
+    {
+      "displayName": "Loxodon Integration Kit",
+      "description": "MVVM bindings and example views for Loxodon",
+      "path": "Samples~/LoxodonIntegrationKIT"
     }
   ]
-
 }
