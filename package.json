@@ -15,9 +15,9 @@
     },
 
     {
-      "displayName": "Loxodon Integration Kit",
-      "description": "MVVM bindings and example views for Loxodon",
-      "path": "Samples~/LoxodonIntegrationKIT"
+      "displayName": "Tiny Sound System KIT R3",
+      "description": "R3 Examples and implementation",
+      "path": "Samples~/TinySoundSystemKIT_R3"
     }
   ]
 }
